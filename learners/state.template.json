@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "learner_id": null,
+  "profile": {
+    "available_days": [],
+    "daily_minutes": null,
+    "goals": {},
+    "experience": null
+  },
+  "diagnosis": {},
+  "plan": {
+    "days": []
+  },
+  "problems": {},
+  "active_problem_id": null,
+  "concept_evidence": {},
+  "review_queue": [],
+  "updated_at": null
+}

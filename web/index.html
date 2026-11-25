@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>빅분기 실기 튜터</title>
+  <meta name="description" content="빅데이터분석기사 실기 1:1 AI 튜터 — 진단, 일정, 한 문항씩 출제, 3단계 힌트, 채점, 요약노트">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">빅</span>
+      <div>
+        <h1>빅분기 실기 튜터</h1>
+        <p class="sub">진단 → 일정 → 한 문항씩 → 힌트 → 채점 → 요약노트</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <label class="learner-pick">
+        <span>학습 ID</span>
+        <select id="learnerSelect" aria-label="학습 ID 선택"></select>
+      </label>
+      <button class="btn ghost" id="newChatBtn" title="학습 기록은 유지하고 대화만 새로 시작">새 대화</button>
+      <button class="btn ghost" id="backupBtn">백업</button>
+      <button class="btn ghost" id="settingsBtn">설정</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="chat" aria-label="수업 대화">
+      <div class="messages" id="messages" aria-live="polite"></div>
+      <div class="quick" id="quickBar">
+        <button type="button" class="chip mobile-jump" id="jumpToCode">코드로 이동</button>
+        <button class="chip" data-say="힌트 주세요">힌트</button>
+        <button class="chip" data-say="다음 문제 주세요">다음 문제</button>
+        <button class="chip" data-say="오늘 진도표 보여줘">진도표</button>
+        <button class="chip" data-say="지금까지 내용으로 요약노트 PDF 만들어줘">요약노트</button>
+      </div>
+      <form class="composer" id="composer">
+        <textarea id="input" rows="2" placeholder="예: 시험까지 6일 남았어. 하루 3시간 가능해. 내 실력부터 확인해서 가르쳐줘." aria-label="메시지 입력"></textarea>
+        <div class="composer-actions">
+          <button type="button" class="btn ghost" id="stopBtn" hidden>중지</button>
+          <button type="submit" class="btn primary" id="sendBtn">보내기</button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="side" aria-label="실습 도구">
+      <nav class="tabs" role="tablist">
+        <button role="tab" class="tab active" data-tab="code" aria-selected="true">코드</button>
+        <button role="tab" class="tab" data-tab="progress" aria-selected="false">진도</button>
+        <button role="tab" class="tab" data-tab="notes" aria-selected="false">요약노트</button>
+      </nav>
+
+      <div class="panel" id="panel-code">
+        <div class="panel-head">
+          <span class="py-status" id="pyStatus" role="status">Python 대기 중</span>
+          <div class="row-actions">
+            <button type="button" class="btn ghost small mobile-jump" id="jumpToChat">수업으로 돌아가기</button>
+            <label class="btn ghost small file-btn">파일 올리기<input type="file" id="fileInput" multiple hidden></label>
+            <button class="btn ghost small" id="runBtn">실행 <span class="run-shortcut">(Ctrl+Enter)</span></button>
+            <button class="btn primary small" id="submitBtn">제출</button>
+          </div>
+        </div>
+        <textarea id="editor" class="editor" spellcheck="false" aria-label="Python 코드 편집기">import pandas as pd
+import numpy as np
+
+# 튜터가 준 데이터 생성 코드를 붙여 넣고 풀이를 작성하세요.
+</textarea>
+        <div class="out-head"><span>출력</span><button class="link" id="clearOut">지우기</button></div>
+        <pre class="output" id="output"></pre>
+        <p class="hint-text">pandas · numpy · scipy · scikit-learn · statsmodels를 브라우저에서 실행합니다. 올린 파일은 <code>/home/pyodide/파일명</code>에 있어요.</p>
+      </div>
+
+      <div class="panel" id="panel-progress" hidden>
+        <div id="progressView" class="progress-view"></div>
+      </div>
+
+      <div class="panel" id="panel-notes" hidden>
+        <div id="notesList" class="notes-list"></div>
+        <article id="noteView" class="note-view"></article>
+      </div>
+    </aside>
+  </main>
+
+  <dialog id="settingsDlg" class="dlg">
+    <form method="dialog" id="settingsForm">
+      <h2>튜터 연결 설정</h2>
+      <label>내 Anthropic API 키
+        <input type="password" name="apiKey" autocomplete="off" placeholder="sk-ant-...">
+      </label>
+      <p class="note">Anthropic Console에서 발급한 개인 키를 입력하세요. AI 사용료는 키를 발급한 계정에 청구됩니다. 키는 이 브라우저에 저장되며 Anthropic API에 연결할 때 사용됩니다.</p>
+      <p class="note" id="connectionError" role="alert"></p>
+      <details>
+        <summary>고급 설정</summary>
+      <div class="grid2">
+        <label>모델
+          <input type="text" name="model">
+        </label>
+        <label>사고 깊이(effort)
+          <select name="effort">
+            <option value="low">low · 빠름</option>
+            <option value="medium">medium · 기본</option>
+            <option value="high">high · 꼼꼼함</option>
+          </select>
+        </label>
+      </div>
+      <label class="check"><input type="checkbox" name="useFallbacks"> 응답 거절 시 다른 모델로 자동 재시도 (server-side fallback)</label>
+        <label>Pyodide 주소
+          <input type="url" name="pyodideIndexURL">
+        </label>
+      </details>
+      <div class="dlg-actions">
+        <button type="button" class="btn ghost" id="disconnectBtn">저장된 연결 지우기</button>
+        <button class="btn ghost" value="cancel" formnovalidate>취소</button>
+        <button class="btn primary" value="save" id="saveSettings">저장하고 닫기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="backupDlg" class="dlg">
+    <form method="dialog">
+      <h2>백업 · 기기 이동</h2>
+      <p class="note">학습 기록과 요약노트는 이 브라우저에 저장됩니다. 다른 기기나 내려받은 HTML에서 이어 하려면 전체 백업을 저장한 뒤 그 환경에서 가져오세요.</p>
+      <div class="stack">
+        <button type="button" class="btn primary" id="exportBtn">다른 기기로 옮길 전체 백업 저장 (.json)</button>
+        <button type="button" class="btn ghost" id="exportStateBtn">현재 학습자 기록만 저장 (state.json)</button>
+        <label class="btn ghost file-btn">백업 가져오기<input type="file" id="importInput" accept=".json,application/json" hidden></label>
+      </div>
+      <div class="dlg-actions"><button class="btn ghost" value="close">닫기</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="importChoiceDlg" class="dlg" aria-labelledby="importTitle">
+    <form method="dialog">
+      <h2 id="importTitle">백업 가져오기</h2>
+      <p class="note">같은 학습 ID가 있으면 기존 기록을 유지하거나 백업 기록으로 교체할 수 있어요.</p>
+      <div class="stack">
+        <button class="btn primary" value="keep">기존 기록 유지하고 가져오기</button>
+        <button class="btn ghost" value="overwrite">같은 ID 덮어쓰고 가져오기</button>
+        <button class="btn ghost" value="cancel" autofocus>가져오기 취소</button>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="welcomeTpl">
+    <div class="welcome">
+      <h2>시험까지 남은 날에 맞춰 가르쳐 드릴게요</h2>
+      <p>남은 공부 가능 일수와 하루 시간을 알려주면 짧은 진단 후 날짜별 계획을 세우고, 문제를 하나씩 내고 채점합니다.</p>
+      <div class="starters">
+        <button type="button" class="starter" id="practiceStart">가입 없이 Python 실습</button>
+        <button type="button" class="starter" id="connectAI">내 계정으로 AI 튜터 연결</button>
+      </div>
+      <p id="welcomeSetup">Python 실습은 가입 없이 이용할 수 있어요. AI 출제·힌트·채점에는 본인 Anthropic API 키가 필요합니다.</p>
+      <div class="starters">
+        <button class="starter" data-say="빅데이터분석기사 실기까지 공부할 수 있는 날이 6일 남았어. 하루 3시간 가능해. 내 실력부터 확인해서 가르쳐줘.">6일 · 하루 3시간으로 시작하기</button>
+        <button class="starter" data-say="시험이 내일이야. 오늘 4시간 공부할 수 있어. 꼭 필요한 것만 가르쳐줘.">하루 남았을 때</button>
+        <button class="starter" data-say="진단 없이 공통 요약노트만 만들어줘.">공통 요약노트만 받기</button>
+      </div>
+      <p class="muted" id="welcomeResume"></p>
+    </div>
+  </template>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
